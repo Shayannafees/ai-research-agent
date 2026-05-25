@@ -11,12 +11,14 @@ from langchain_anthropic import ChatAnthropic
 from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from tavily import TavilyClient
 
 load_dotenv()
 
 # ── CLIENTS ───────────────────────────────────────────────────────
 anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 voyage_client = voyageai.Client(api_key=os.getenv("VOYAGE_API_KEY"))
+tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 llm = ChatAnthropic(model="claude-sonnet-4-5", api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 # ── FASTAPI APP ───────────────────────────────────────────────────
@@ -77,8 +79,19 @@ def calculate(expression: str) -> str:
     except Exception as e:
         return f"Error: {str(e)}"
 
+
+@tool
+def web_search(query: str) -> str:
+    """Search the internet for current, real-time information.
+    Use this for recent news, current events, or anything not in the knowledge base."""
+    results = tavily_client.search(query, max_results=3)
+    output = []
+    for r in results['results']:
+        output.append(f"Title: {r['title']}\nContent: {r['content']}\nURL: {r['url']}")
+    return "\n\n".join(output)
+
 # ── AGENT SETUP ───────────────────────────────────────────────────
-tools = [search_knowledge_base, calculate]
+tools = [search_knowledge_base, calculate, web_search]
 
 prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a research assistant with access to a knowledge base and calculator.
@@ -90,6 +103,18 @@ Think step by step about what tools you need."""),
 
 agent = create_tool_calling_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+
+
+@tool
+def web_search(query: str) -> str:
+    """Search the internet for current, real-time information.
+    Use this for recent news, current events, or anything not in the knowledge base."""
+    results = tavily_client.search(query, max_results=3)
+    output = []
+    for r in results['results']:
+        output.append(f"Title: {r['title']}\nContent: {r['content']}\nURL: {r['url']}")
+    return "\n\n".join(output)
 
 # ── REQUEST MODEL ─────────────────────────────────────────────────
 class QuestionRequest(BaseModel):
