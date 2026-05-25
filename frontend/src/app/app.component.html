@@ -1,0 +1,7 @@
+<div>
+  <h2>Ask Anything</h2>
+  <input type="text" name="question" [(ngModel)]="question" placeholder="Ask anything">
+  <button (click)="ask()">Ask</button>
+  <span *ngIf="isLoading">Loading...</span>
+  <div>{{answer}}</div>
+</div>

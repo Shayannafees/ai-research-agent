@@ -22,6 +22,17 @@ llm = ChatAnthropic(model="claude-sonnet-4-5", api_key=os.getenv("ANTHROPIC_API_
 # ── FASTAPI APP ───────────────────────────────────────────────────
 app = FastAPI(title="AI Research Agent API")
 
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # ── KNOWLEDGE BASE ────────────────────────────────────────────────
 documents = [
     "RAG stands for Retrieval-Augmented Generation. It combines search with LLMs to answer questions grounded in real documents.",
